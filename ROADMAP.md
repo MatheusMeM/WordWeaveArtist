@@ -13,7 +13,7 @@ This document tracks the implementation status of features based on the initial 
 ## Core Functionality
 - `[x]` Image Import (PNG, JPG, BMP)
 - `[/]` Word/Character-Based Rendering Engine (Grid logic implemented, skips white)
-- `[x]` Brightness-to-Word/Character Mapping (Handles skip white)
+- `[x]` Brightness-to-Word/Character Mapping (Handles skip white, uses final processed image brightness)
 - `[x]` Predefined Character Set Gradients (Selection implemented)
 - `[x]` Custom Word List Gradient Usage (Selection implemented)
 
@@ -23,9 +23,9 @@ This document tracks the implementation status of features based on the initial 
 - `[x]` Main Window Structure (PySide6)
 - `[x]` Left Settings Panel Layout
 - `[x]` Right Preview Panel Layout (3 Previews Implemented)
-- `[x]` Original Image Preview Area
-- `[x]` Processed (B&W) Image Preview Area
-- `[x]` Final Render Preview Area
+- `[x]` Input Image Preview Area
+- `[x]` Processed Image Preview Area (Shows final image after all processing)
+- `[x]` Output Image Preview Area (Rendered ASCII Art)
 - `[x]` Image Import Button
 - `[x]` Word List Input (Text Area)
 - `[x]` Word List Input (Load from .txt file)
@@ -33,19 +33,17 @@ This document tracks the implementation status of features based on the initial 
 - `[ ]` Copy Art to Clipboard Button
 
 **2. Image Pre-processing Controls:**
-- `[ ]` DELETE Automatic Black & White Conversion 
-- `[ ]` Adjustable Thresholding Slider with a toogle check box to enable or disable the feature
-- `[ ]` Brightness Slider
-- `[ ]` Saturation Slider
-- `[ ]` Grayscale Slider
-- `[ ]` Contrast Slider
-- `[ ]` Hue Slider
-- `[ ]` Invert Colors Toggle
-- `[ ]` Sharpness Slider
-- `[ ]` Edge Detection Slider with a toogle check box to enable or disable the feature 
+- `[x]` Adjustable Thresholding Slider & Toggle
+- `[x]` Brightness Slider
+- `[x]` Saturation Slider
+- `[x]` Grayscale Slider
+- `[x]` Contrast Slider
+- `[x]` Invert Colors Toggle
+- `[x]` Sharpness Slider
+- `[x]` Edge Detection Toggle (Simple Filter, Inverted Output)
 
 **3. Word Generation & Styling Controls:**
-- `[x]` Word Density Control (SpinBox)
+- `[x]` Word Density Control (SpinBox, Increased Max)
 - `[!]` Font Selection Dropdown (System Fonts - Workaround Implemented)
 - `[ ]` Font Selection (Import Custom TTF/OTF) - *Enhancement Needed*
 - `[x]` Font Size Control (SpinBox)
@@ -70,13 +68,10 @@ This document tracks the implementation status of features based on the initial 
 
 ---
 *Implementation Steps Status:*
-- `[x]` Step 1: Project Setup
-- `[x]` Step 2: Basic GUI Window (PySide6)
-- `[x]` Step 3: Image Loading & Display (Multi-preview)
-- `[x]` Step 4: B&W Conversion Implemented (Fixed Threshold)
-- `[x]` Step 5: Word List Input
-- `[x]` Step 6: Font Selection & Basic Rendering (Workaround implemented)
-- `[x]` Step 7: Brightness-to-Item Mapping Logic (Handles skip white)
-- `[x]` Step 8: Basic Placement Strategy (Grid-Based) Implemented
-- `[x]` Step 9: Rendering Engine V1 (Grid) Implemented (Handles skip white)
-- `[x]` Step 10: Preview Panel Integration (3 Previews Implemented)
+- `[x]` Step 1-10: Core structure, UI, basic rendering, multi-preview implemented.
+- `[x]` Step 11: Image Pre-processing Controls Added & Integrated.
+- `[x]` Step 12: Processed Preview shows final mapping image.
+- `[x]` Step 13: Density limit increased.
+- `[x]` Step 14: Refactored into `image_processor.py` and `render_engine.py`.
+- `[x]` Step 15: Corrected processed preview logic and naming.
+- `[x]` Step 16: Inverted Edge Detection output.

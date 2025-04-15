@@ -8,42 +8,42 @@ WordWeave Artist is a desktop application designed to transform raster images in
 
 The application follows this general data flow:
 
-1.  **Image Import:** The user imports a raster image (`original_image`).
-2.  **B&W Conversion:** The image is immediately converted to a black and white representation (`processed_image`) using a fixed threshold (currently `BW_THRESHOLD = 128`). Pure white pixels have a value of 255, black pixels 0.
-3.  **Gradient Source:** The user selects either a "Custom Word List" (entered/loaded) or a predefined "ASCII Character Set".
-4.  **Brightness Mapping:** Based on the selected gradient source, a mapping (`brightness_map`) is created. This map assigns each word/character to a range of brightness values (0-254). Pure white (255) is explicitly mapped to a special `SKIP_RENDER_VALUE`.
-5.  **Placement Generation:** Currently uses a "Grid-Based" strategy (`generate_grid_placement`).
-    *   The B&W `processed_image` is divided into a grid based on the selected `word_density`.
-    *   The average brightness of each grid cell is calculated.
-    *   The `brightness_map` is used to determine the word/character (`item`) for that average brightness.
-    *   If the `item` is not `SKIP_RENDER_VALUE`, its target position (cell center) is stored in `grid_placement_data`.
-6.  **Rendering:** The `render_word_grid` function creates a new blank canvas.
-    *   It iterates through the `grid_placement_data`.
-    *   For each `item` and its position, it attempts to load the selected font (`selected_font_name`, `selected_font_size`) using Pillow's `ImageFont.truetype`, with fallbacks for common fonts if the primary one fails.
-    *   The `item` (word or character) is drawn onto the canvas, centered at its target position.
-7.  **Preview Update:** The application displays three previews:
-    *   `original_preview`: Shows the `original_image`.
-    *   `bw_preview`: Shows the `processed_image` (B&W).
-    *   `render_preview`: Shows the final `rendered_image` generated in step 6.
+1.  **Image Import:** The user imports a raster image (`original_image`). Displayed in "Input Image" preview.
+2.  **Image Processing:** All user-selected adjustments (Brightness, Contrast, Saturation, Grayscale, Invert, Sharpness, Threshold, Edge Detect) are applied sequentially by `image_processor.apply_image_processing`. Edge detection results are inverted (black edges on white). The single resulting image (`processed_image`) is generated. This represents the final state after all user adjustments.
+3.  **Processed Preview:** The final `processed_image` is displayed in the "Processed Image" preview pane, giving direct visual feedback on the source for mapping.
+4.  **Gradient Source:** The user selects either a "Custom Word List" or a predefined "ASCII Character Set".
+5.  **Brightness Mapping:** `render_engine.update_brightness_map` creates a mapping (`brightness_map`) based on the selected gradient source. It calculates the brightness of pixels in the `processed_image` (converting to grayscale 'L' mode internally if needed) and assigns words/characters to brightness ranges (0-254). Pure white (255) maps to `SKIP_RENDER_VALUE`.
+6.  **Placement Generation:** `render_engine.generate_grid_placement` uses the `processed_image` (ensured to be 'L' mode) and `brightness_map`.
+    *   The image is divided into a grid based on `word_density`.
+    *   The average brightness of each grid cell is calculated from the `processed_image`.
+    *   The `brightness_map` determines the word/character (`item`) for that brightness.
+    *   If `item` is not `SKIP_RENDER_VALUE`, its target position (cell center) is stored.
+7.  **Rendering:** `render_engine.render_word_grid` creates a new blank canvas.
+    *   It iterates through the placement data.
+    *   For each `item` and position, it loads the selected font (with fallbacks) using `render_engine.try_load_font`.
+    *   The `item` is drawn onto the canvas.
+8.  **Output Preview:** The final rendered image is displayed in the "Output Image" preview pane.
 
-This entire process (steps 4-7) is triggered (`trigger_render`) whenever a relevant setting (image load, gradient source, word list, font, size, density) is changed.
+The processing and rendering pipeline (`trigger_processing_and_render` -> `_apply_image_processing` -> `trigger_render` -> `generate_grid_placement` -> `render_word_grid`) is executed whenever relevant UI controls are changed.
 
-## 3. Key Code Components (`src/main.py`)
+## 3. Key Code Components
 
-*   **`MainWindow`:** The main application class inheriting from `QMainWindow`. Manages UI elements, state variables (images, settings), and connects signals/slots.
-*   **`PreviewLabel`:** Custom `QLabel` subclass used for the three preview areas. Handles automatic scaling of the displayed `QPixmap` while maintaining aspect ratio when the label is resized.
-*   **`_init_ui`, `_create_left_panel`, `_create_right_panel`:** Methods responsible for setting up the GUI layout and widgets.
-*   **`_update_single_preview`:** Helper function to load a Pillow image into a specific `PreviewLabel`.
-*   **`open_image_dialog`:** Handles importing the image, triggers B&W conversion and the main render process.
-*   **`apply_bw_conversion`:** Converts the `original_image` to `processed_image` (B&W 'L' mode).
-*   **`_get_current_gradient_list`:** Returns either the user's `word_list` or the characters from the `selected_ascii_gradient`.
-*   **`_update_brightness_map`:** Creates the dictionary mapping brightness values (0-254) to words/chars, assigning `SKIP_RENDER_VALUE` to 255.
-*   **`get_item_for_brightness`:** Looks up the appropriate word/char/SKIP value for a given brightness in the `brightness_map`.
-*   **`generate_grid_placement`:** Calculates grid cell brightness from `processed_image` and determines which items (excluding SKIP) to place where, storing results in `grid_placement_data`.
-*   **`_try_load_font`:** Attempts to load the selected font using Pillow, with fallbacks.
-*   **`render_word_grid`:** Creates the final output image by drawing items from `grid_placement_data` using the loaded font.
-*   **`trigger_render`:** Orchestrates the process: ensures B&W image exists, updates map, generates placement, renders grid, and updates the final preview pane.
-*   **Signal Handlers (`parse_word_list_from_text`, `load_words_from_file`, `update_gradient_source`, etc.):** Respond to UI interactions, update application state, and call `trigger_render`.
+*   **`src/main.py` (`MainWindow`):**
+    *   Manages the main application window, UI layout (using `_create_left_panel`, `_create_right_panel`), and widgets (`PreviewLabel`, sliders, checkboxes, etc.).
+    *   Holds the application state (image objects, processing settings, styling settings).
+    *   Connects UI signals (button clicks, slider changes) to slots.
+    *   Orchestrates the overall workflow by calling functions in helper modules.
+    *   Handles file dialogs (`open_image_dialog`, `load_words_from_file`).
+    *   Updates preview panes (`_update_single_preview`).
+*   **`src/image_processor.py`:**
+    *   `apply_image_processing()`: Takes the original image and all processing settings, applies them sequentially (color/tone -> grayscale -> effects -> threshold/edge), and returns the single final processed image used for preview and mapping.
+*   **`src/render_engine.py`:**
+    *   `update_brightness_map()`: Creates the brightness-to-item mapping dictionary.
+    *   `get_item_for_brightness()`: Looks up an item in the map based on brightness.
+    *   `try_load_font()`: Loads fonts with fallbacks.
+    *   `generate_grid_placement()`: Calculates average brightness from the processed image cells and determines item placements.
+    *   `render_word_grid()`: Draws the items onto the final output canvas.
+*   **Constants:** Defined in respective modules (`main.py`, `render_engine.py`).
 
 ## 4. Setup & Running
 
@@ -55,12 +55,12 @@ This entire process (steps 4-7) is triggered (`trigger_render`) whenever a relev
     *   Activate (Windows): `.\venv\Scripts\activate`
     *   Activate (macOS/Linux): `source venv/bin/activate`
 5.  **Install Dependencies:** `pip install -r requirements.txt`
-6.  **Run:** `python src/main.py` (Ensure the virtual environment is active in the terminal).
+6.  **Run:** `python src/main.py` (Ensure the virtual environment is active).
 
 ## 5. Dependencies
 
-See `requirements.txt` (Currently PySide6 and Pillow).
+See `requirements.txt` (PySide6, Pillow).
 
 ## 6. Development Roadmap
 
-See `ROADMAP.md` for planned features and current implementation status.
+See `ROADMAP.md`.
