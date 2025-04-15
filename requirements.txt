@@ -1,0 +1,9 @@
+# GUI Framework (Choose one)
+# PyQt6
+PySide6
+
+# Image Processing
+Pillow>=9.0.0
+
+# Font Handling (Optional - if advanced metrics needed later)
+# freetype-py
